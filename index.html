@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Password Analyzer</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    color: white;
+    text-align: center;
+    padding: 40px;
+}
+
+.box {
+    background: rgba(0,0,0,0.6);
+    padding: 30px;
+    border-radius: 15px;
+    display: inline-block;
+    width: 480px;
+    box-shadow: 0 0 25px rgba(0,255,150,0.2);
+}
+
+h2 {
+    margin-bottom: 5px;
+}
+
+.small {
+    color: #aaa;
+    margin-bottom: 20px;
+}
+
+input {
+    padding: 12px;
+    width: 85%;
+    border-radius: 8px;
+    border: none;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #00c896;
+    color: black;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover {
+    background: #00ffb3;
+    transform: scale(1.05);
+}
+
+#strengthBar {
+    height: 10px;
+    width: 0%;
+    background: red;
+    border-radius: 5px;
+    margin-top: 10px;
+    transition: 0.4s;
+}
+
+.section {
+    margin-top: 20px;
+    text-align: left;
+}
+
+.red { color: #ff4d4d; }
+.yellow { color: #ffd633; }
+.green { color: #66ff99; }
+
+ul {
+    margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+<h2>🔐 Password Analyzer</h2>
+<p class="small">Advanced Password Security Tool</p>
+
+<input type="password" id="password" placeholder="Enter password">
+<br>
+<button onclick="checkPassword()">Analyze</button>
+
+<div id="strengthBar"></div>
+
+<div class="section">
+<p id="output"></p>
+<p id="time"></p>
+<p id="strength"></p>
+</div>
+
+<div class="section">
+<p id="suggestions"></p>
+</div>
+
+</div>
+
+<script>
+function checkPassword() {
+
+    let pw = document.getElementById("password").value;
+
+    let score = 0;
+    let feedback = [];
+
+    let hasLower = /[a-z]/.test(pw);
+    let hasUpper = /[A-Z]/.test(pw);
+    let hasNumber = /[0-9]/.test(pw);
+    let hasSymbol = /[!@#$%^&*()]/.test(pw);
+
+    // LENGTH
+    if (pw.length >= 16) score += 4;
+    else if (pw.length >= 12) score += 3;
+    else if (pw.length >= 8) score += 2;
+    else if (pw.length >= 5) score += 1;
+
+    // VARIETY
+    if (hasLower) score++;
+    if (hasUpper) score++;
+    if (hasNumber) score++;
+    if (hasSymbol) score++;
+
+    // PENALTIES
+    if (/(.)\1{2,}/.test(pw)) score -= 2;
+    if (/(123|abc|qwerty)/i.test(pw)) score -= 2;
+
+    let common = ["password","123456","qwerty"];
+    if (common.includes(pw.toLowerCase())) score = 0;
+
+    if (score < 0) score = 0;
+    if (score > 10) score = 10;
+
+    // STRENGTH BAR
+    let bar = document.getElementById("strengthBar");
+    bar.style.width = (score * 10) + "%";
+
+    if (score <= 3) bar.style.background = "red";
+    else if (score <= 7) bar.style.background = "gold";
+    else bar.style.background = "lime";
+
+    // STRENGTH TEXT
+    let strengthText = "";
+    let colorClass = "";
+
+    if (score <= 3) {
+        strengthText = "WEAK";
+        colorClass = "red";
+    }
+    else if (score <= 7) {
+        strengthText = "MEDIUM";
+        colorClass = "yellow";
+    }
+    else {
+        strengthText = "STRONG";
+        colorClass = "green";
+    }
+
+    // TIME
+    let time = "";
+    if (score <= 2) time = "Instantly crackable";
+    else if (score <= 4) time = "Minutes to hours";
+    else if (score <= 6) time = "Hours to days";
+    else if (score <= 8) time = "Years";
+    else time = "Decades+";
+
+    // FEEDBACK
+    if (pw.length < 12) feedback.push("Use at least 12 characters");
+    if (!hasUpper) feedback.push("Add uppercase letters");
+    if (!hasNumber) feedback.push("Add numbers");
+    if (!hasSymbol) feedback.push("Add symbols");
+
+    if (feedback.length === 0) feedback.push("Very strong password");
+
+    // BETTER PASSWORDS
+    function gen() {
+        let words = ["Tiger","Ocean","Rocket","Shadow","Storm","Falcon","Nova","Echo"];
+        let symbols = ["!","@","#","$"];
+        let w1 = words[Math.floor(Math.random()*words.length)];
+        let w2 = words[Math.floor(Math.random()*words.length)];
+        let num = Math.floor(10 + Math.random()*90);
+        let sym = symbols[Math.floor(Math.random()*symbols.length)];
+        return w1 + sym + w2 + num + sym;
+    }
+
+    let suggestionHTML = "";
+    if (score <= 7 && pw.length > 0) {
+        suggestionHTML =
+            "<b>Better password examples:</b><ul>" +
+            "<li>" + gen() + "</li>" +
+            "<li>" + gen() + "</li>" +
+            "<li>" + gen() + "</li></ul>";
+    }
+
+    // OUTPUT
+    document.getElementById("output").innerHTML = "Score: " + score + "/10";
+    document.getElementById("time").innerHTML = "Crack time: " + time;
+    document.getElementById("strength").innerHTML =
+        "Strength: <span class='" + colorClass + "'>" + strengthText + "</span><br><ul><li>" +
+        feedback.join("</li><li>") + "</li></ul>";
+
+    document.getElementById("suggestions").innerHTML = suggestionHTML;
+}
+</script>
+
+</body>
+</html>
